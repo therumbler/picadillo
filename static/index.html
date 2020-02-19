@@ -19,6 +19,8 @@
     <div id="logs"></div>
 </div>
 <script>
+var x = 0;
+var y = 0;
 var getWebsocketAddress = function(){
     var address = window.location.protocol === 'https:' ? 'wss://': 'ws://';
     if (window.location.port){
@@ -50,10 +52,8 @@ var displayState = function(state){
         }
         return
     }
-    x = state['x'];
-    y = state['y'];
     colour = state['colour'];
-    drawLine(context, x, y, x+1, y+1, colour);
+    drawLine(context, state['x1'], state['y1'], state['x2'], state['y2'], colour);
     return;
 }
 
@@ -62,17 +62,13 @@ ws.onmessage = function(event) {
     displayState(state);
 };
 
-function sendMessage(event) {
-    event.preventDefault();
-    var input = document.getElementById("messageText");
-    ws.send(input.value);
-    return false;
-}
 var isDrawing = false;
 var canvas = document.querySelector('#canvas');
 var context = canvas.getContext('2d');
 var rect = canvas.getBoundingClientRect();
 var mouseDown = function(evt){
+    x = evt.clientX - rect.left;
+    y = evt.clientY - rect.top;
     console.log('mouseDown')
     isDrawing = true;
     console.log(evt);
@@ -84,34 +80,47 @@ var mouseUp = function(evt){
 
 var touchMove = function(evt){
     touch = evt.changedTouches[0];
-    x = touch.pageX - rect.left;
-    y = touch.pageY - rect.top;
+    var x2 = touch.pageX - rect.left;
+    var y2 = touch.pageY - rect.top;
     var input = {
-        'x': x,
-        'y': y,
+        'x1': x,
+        'y1': y,
+        'x2': x2,
+        'y2': y2,
         'colour': 0
     }
     ws.send(JSON.stringify(input));
+    x = x2;
+    y = y2;
 }
 
 var mouseMove = function(evt){
     if(!isDrawing) return;
-     var x = evt.clientX - rect.left;
-    var y = evt.clientY - rect.top;
+    x2 = evt.clientX - rect.left;
+    y2 = evt.clientY - rect.top;
 
     var input = {
-        'x': x,
-        'y': y,
+        'x1': x,
+        'y1': y,
+        'x2': x2,
+        'y2': y2,
         'colour': 0
     }
     ws.send(JSON.stringify(input));
     console.log('mouseMove')
+    x = x2;
+    y = y2;
 }
 
+var touchStart = function(evt){
+    touch = evt.changedTouches[0];
+    x = touch.pageX - rect.left;
+    y = touch.pageY - rect.top;
+}
 canvas.addEventListener('mousedown', mouseDown);
 canvas.addEventListener('mouseup', mouseUp);
 canvas.addEventListener('mousemove', mouseMove);
-canvas.addEventListener('touchstart', mouseDown);
+canvas.addEventListener('touchstart', touchStart);
 canvas.addEventListener('touchend', mouseUp);
 canvas.addEventListener('touchmove', touchMove);
 
