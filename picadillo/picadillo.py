@@ -6,7 +6,6 @@ logger = logging.getLogger(__name__)
 
 class Picadillo():
     def __init__(self):
-        self.updated = False
         self.width = 255
         self.height = 255
         self.canvas = [
@@ -31,16 +30,30 @@ class Picadillo():
     async def remove_client(self, ws):
         self.clients.remove(ws)
     
+    async def clear(self):
+        for x in range(self.width):
+            for y in range(self.height):
+                self.canvas[x][y] = 255
+        for client in self.clients:
+            await client.send_json({'event': 'clear'})
+
     async def process_input(self, input):
         logger.debug('process_input %s', input)
+        if 'event' in input:
+            if input['event'] == 'clear':
+                await self.clear()
+
+            return
         position = input['x'] + int(input['y']) * self.width
         logger.debug('position = %s', position)
         x = input['x']
         y = int(input['y'])
         self.canvas[x][y] = input['colour']
-        self.updated = False
+        await self.update_clients(input)
+
+    async def update_clients(self, state):
         for client in self.clients:
-            await client.send_json(input)
+            await client.send_json(state)
     
 
 

@@ -6,7 +6,9 @@
 <body>
     <h1>Picadillo</h1>
     <canvas id="canvas" width="255" height="255"></canvas>
-    <script>
+
+<button id="clear">clear</button>
+<script>
 var getWebsocketAddress = function(){
     var address = window.location.protocol === 'https:' ? 'wss://': 'ws://';
     if (window.location.port){
@@ -19,10 +21,9 @@ var getWebsocketAddress = function(){
 }
 var ws = new WebSocket(getWebsocketAddress());
 
-var oldState;
-function drawLine(context, x1, y1, x2, y2) {
+function drawLine(context, x1, y1, x2, y2, colour) {
     context.beginPath();
-    context.strokeStyle = 'black';
+    context.strokeStyle = colour == 0 ? 'black' : 'white';
     context.lineWidth = 2;
     context.moveTo(x1, y1);
     context.lineTo(x2, y2);
@@ -30,28 +31,22 @@ function drawLine(context, x1, y1, x2, y2) {
     context.closePath();
 }
 var displayState = function(state){
-    console.log('displayState');
-    if(state['colour'] == 255) {
-        console.log('no change');
-        return;
-    }
     console.log('updating state...');
+    if(state.hasOwnProperty('event')){
+        console.log('we have an event', state);
+        if(state['event'] == 'clear'){
+            console.log('clearing the canvas')
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        return
+    }
     x = state['x'];
     y = state['y'];
-    drawLine(context, x, y, x+1, y+1);
+    colour = state['colour'];
+    drawLine(context, x, y, x+1, y+1, colour);
     return;
-        
-    for(var x=0; x<255; x++){
-        for(var y=0; y<255; y++){
-            position = x + (y * 255);
-            var color = state[position];
-            if(color == 0){
-                drawLine(context, x, y, x+1, y+1);
-            }
-        }
-    }
-    oldState = state;
 }
+
 ws.onmessage = function(event) {
     var state = JSON.parse(event.data);
     displayState(state);
@@ -68,7 +63,6 @@ var canvas = document.querySelector('#canvas');
 var context = canvas.getContext('2d');
 var rect = canvas.getBoundingClientRect();
 var mouseDown = function(evt){
-
     console.log('mouseDown')
        isDrawing = true;
     console.log(evt);
@@ -88,14 +82,18 @@ var mouseMove = function(evt){
         'colour': 0
     }
     ws.send(JSON.stringify(input));
-
-
     console.log('mouseMove')
 }
 
 canvas.addEventListener('mousedown', mouseDown);
 canvas.addEventListener('mouseup', mouseUp);
 canvas.addEventListener('mousemove', mouseMove);
+document.querySelector('#clear').addEventListener('click', function(e){
+    var event = {'evt': 'clr'};
+    ws.send(JSON.stringify({'event': 'clear'}
+));
+
+});
 </script>
 </body>
 </html>
