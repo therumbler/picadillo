@@ -22,6 +22,8 @@ class Picadillo():
         self.clients.append(ws)
         await ws.send_json(self.canvas)
 
+    async def remove_client(self, ws):
+        self.clients.remove(ws)
     async def update_clients(self):
         if self.updated:
             return

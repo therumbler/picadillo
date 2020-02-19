@@ -2,7 +2,7 @@ import logging
 
 from fastapi import FastAPI
 from starlette.responses import HTMLResponse
-from starlette.websockets import WebSocket
+from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from picadillo import Picadillo
 
@@ -28,8 +28,15 @@ def make_app():
 
         await picadillo.add_client(ws)
         while True:
-            input = await ws.receive_json()
-            await picadillo.process_input(input)
+            try:
+                input = await ws.receive_json()
+                await picadillo.process_input(input)
+            except WebSocketDisconnect:
+                logger.info('WebSocketDisconnect')
+                await picadillo.remove_client(ws)
+                break
+        logger.info('end of websocket_endpoint')
+
 
 
     return app
