@@ -2,12 +2,21 @@
 <html>
 <head>
     <title>Picadillo</title>
+    <style>
+     #main {
+         max-width: 860px;
+         margin: auto;
+     }
+
+    </style>
 </head>
 <body>
+<div id="main">
     <h1>Picadillo</h1>
     <canvas id="canvas" width="255" height="255"></canvas>
-
-<button id="clear">clear</button>
+    <button id="clear">clear</button>
+    <div id="logs"></div>
+</div>
 <script>
 var getWebsocketAddress = function(){
     var address = window.location.protocol === 'https:' ? 'wss://': 'ws://';
@@ -64,7 +73,7 @@ var context = canvas.getContext('2d');
 var rect = canvas.getBoundingClientRect();
 var mouseDown = function(evt){
     console.log('mouseDown')
-       isDrawing = true;
+    isDrawing = true;
     console.log(evt);
 }
 var mouseUp = function(evt){
@@ -72,10 +81,24 @@ var mouseUp = function(evt){
     isDrawing = false;
 }
 
+var touchMove = function(evt){
+    touch = evt.changedTouches[0];
+    x = touch.pageX - rect.left;
+    y = touch.pageY - rect.top;
+    var input = {
+        'x': x,
+        'y': y,
+        'colour': 0
+    }
+    ws.send(JSON.stringify(input));
+}
+
 var mouseMove = function(evt){
     if(!isDrawing) return;
      var x = evt.clientX - rect.left;
     var y = evt.clientY - rect.top;
+
+    document.querySelector('#logs').innerHTML = evt;
     var input = {
         'x': x,
         'y': y,
@@ -88,6 +111,10 @@ var mouseMove = function(evt){
 canvas.addEventListener('mousedown', mouseDown);
 canvas.addEventListener('mouseup', mouseUp);
 canvas.addEventListener('mousemove', mouseMove);
+canvas.addEventListener('touchstart', mouseDown);
+canvas.addEventListener('touchend', mouseUp);
+canvas.addEventListener('touchmove', touchMove);
+
 document.querySelector('#clear').addEventListener('click', function(e){
     var event = {'evt': 'clr'};
     ws.send(JSON.stringify({'event': 'clear'}

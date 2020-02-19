@@ -44,12 +44,13 @@ class Picadillo():
                 await self.clear()
 
             return
-        position = input['x'] + int(input['y']) * self.width
-        logger.debug('position = %s', position)
-        x = input['x']
+        x = int(input['x'])
         y = int(input['y'])
-        self.canvas[x][y] = input['colour']
-        await self.update_clients(input)
+        try:
+            self.canvas[x][y] = input['colour']
+            await self.update_clients(input)
+        except IndexError:
+            logger.error('position %d, %d is outside of the canvas', x, y)
 
     async def update_clients(self, state):
         for client in self.clients:

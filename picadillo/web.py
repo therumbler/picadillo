@@ -25,7 +25,6 @@ def make_app():
         await ws.accept()
         logger.info("websocket opened...")
 
-
         await picadillo.add_client(ws)
         while True:
             try:
