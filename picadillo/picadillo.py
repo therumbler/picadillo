@@ -9,36 +9,38 @@ class Picadillo():
         self.updated = False
         self.width = 255
         self.height = 255
-        self.canvas = [255 for _ in range(self.width * self.height)]
+        self.canvas = [
+            [255 for _ in range(self.width)]
+            for __ in range(self.height)
+        ]
         self.clients = list()
-        asyncio.create_task(self._interval())
 
-    async def _interval(self):
-        while True:
-            await self.update_clients()
-            await asyncio.sleep(0.5)
+    def _current_state(self):
+        state = list()
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.canvas[x][y] == 0:
+                    state.append({'x': x, 'y': y, 'colour': 0})
+        return state
 
     async def add_client(self, ws):
         self.clients.append(ws)
-        await ws.send_json(self.canvas)
+        for state in self._current_state():
+            await ws.send_json(state)
 
     async def remove_client(self, ws):
         self.clients.remove(ws)
-    async def update_clients(self):
-        if self.updated:
-            return
-
-        logger.info('sending updates...')
-        for client in self.clients:
-            await client.send_json(self.canvas)
-        self.updated = True
-
+    
     async def process_input(self, input):
         logger.debug('process_input %s', input)
         position = input['x'] + int(input['y']) * self.width
         logger.debug('position = %s', position)
-        self.canvas[position] = input['colour']
+        x = input['x']
+        y = int(input['y'])
+        self.canvas[x][y] = input['colour']
         self.updated = False
+        for client in self.clients:
+            await client.send_json(input)
     
 
 

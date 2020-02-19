@@ -5,7 +5,7 @@
 </head>
 <body>
     <h1>Picadillo</h1>
-    <canvas id="canvas" width="560" height="360"></canvas>
+    <canvas id="canvas" width="255" height="255"></canvas>
     <script>
 var getWebsocketAddress = function(){
     var address = window.location.protocol === 'https:' ? 'wss://': 'ws://';
@@ -31,11 +31,16 @@ function drawLine(context, x1, y1, x2, y2) {
 }
 var displayState = function(state){
     console.log('displayState');
-    if(state == oldState) {
+    if(state['colour'] == 255) {
         console.log('no change');
         return;
     }
-    console.log('updating state...')
+    console.log('updating state...');
+    x = state['x'];
+    y = state['y'];
+    drawLine(context, x, y, x+1, y+1);
+    return;
+        
     for(var x=0; x<255; x++){
         for(var y=0; y<255; y++){
             position = x + (y * 255);
