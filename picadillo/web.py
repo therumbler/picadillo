@@ -8,15 +8,16 @@ from picadillo import Picadillo
 
 logger = logging.getLogger(__name__)
 
+
 def make_app():
     app = FastAPI(__name__)
 
-    with open('static/index.html') as f:
+    with open("static/index.html") as f:
         index_html = f.read()
 
     picadillo = Picadillo()
 
-    @app.get('/')
+    @app.get("/")
     async def index():
         return HTMLResponse(index_html)
 
@@ -31,12 +32,9 @@ def make_app():
                 input = await ws.receive_json()
                 await picadillo.process_input(input)
             except WebSocketDisconnect:
-                logger.info('WebSocketDisconnect')
+                logger.info("WebSocketDisconnect")
                 await picadillo.remove_client(ws)
                 break
-        logger.info('end of websocket_endpoint')
-
-
+        logger.info("end of websocket_endpoint")
 
     return app
-
